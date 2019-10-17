@@ -13,7 +13,7 @@ RUN /docker-bin/docker-build.sh
 USER ${USER_ID}
 ```
 
-You can also used the php-fpm variant that php-fpm and apache. Image `linkbn/php-openshift:X.X-fpm`
+You can also used the php-fpm variant that php-fpm and apache. Image `linkbn/php-openshift:X.X-fpm`, that include php-fpm and apache HTTPD server with fcgi.
 
 ## Entry-point specificity
 
