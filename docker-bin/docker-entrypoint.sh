@@ -15,6 +15,8 @@ if ! whoami &> /dev/null; then
   if [ -w "/etc/passwd" ]; then
     echo "${USER_NAME}:x:$(id -u):0:${USER_NAME} user:${USER_HOME}:/sbin/bash" >> /etc/passwd
   fi
+else
+	USER_NAME=$(whoami)
 fi
 
 echo "USER_NAME: $(id)"
@@ -112,8 +114,10 @@ elif [ "${1}" = "loop" ]; then
 else
 	# Apache - User
 	export APACHE_RUN_USER="${USER_NAME}"
+	export APACHE_RUN_GROUP="root"
 	echo "APACHE_RUN_USER: ${APACHE_RUN_USER}"
-
+	echo "APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}"
+	
 	# Apache - Syslog
 	if ls -1 /etc/apache2/conf-enabled/ | grep -q '^syslog.conf$'; then
 		# APACHE_SYSLOG_HOST not defined but SYSLOG_HOST is
@@ -135,9 +139,10 @@ else
 
 	if which php-fpm 2>&1 > /dev/null; then
 		echo "No command line running Apache HTTPD server with php-fpm"
+		export PHP_CGI_FIX_PATHINFO=1
 		mkdir -p /etc/service/{apache,php-fpm}
-		echo -e "#!/bin/bash\nexec apachectl -DFOREGROUND\n" > "/etc/service/apache/run"
-		echo -e "#!/bin/bash\nexec php-fpm -F\n" > "/etc/service/php-fpm/run"
+		echo -e "#!/bin/bash\nif [ \$(id -u \${APACHE_RUN_USER}) -eq 0 ]; then\n\tunset APACHE_RUN_USER\nfi\nexec apachectl -DFOREGROUND\n" > "/etc/service/apache/run"
+		echo -e "#!/bin/bash\nexec php-fpm --nodaemonize --force-stderr --allow-to-run-as-root\n" > "/etc/service/php-fpm/run"
 		chmod +x /etc/service/*/run
 		exec runsvdir /etc/service/
 	else

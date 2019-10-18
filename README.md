@@ -180,6 +180,7 @@ You can override some PHP configuration setting by defining the following enviro
 
 #### General configuration
 
+* **PHP_CGI_FIX_PATHINFO**: [cgi.fix_pathinfo](https://www.php.net/manual/en/ini.core.php#ini.cgi.fix-pathinfo) (default: `0` for mod_php and `1` for fpm)
 * **PHP_TIMEZONE**: [date.timezone](http://php.net/manual/en/datetime.configuration.php#ini.date.timezone) (default: `$TZ`)
 * **PHP_UPLOAD_MAX_FILESIZE**: [upload_max_filesize](http://php.net/manual/en/ini.core.php#ini.upload-max-filesize) (default: `2m`)
 * **PHP_POST_MAX_SIZE**: [post_max_size](http://php.net/manual/en/ini.core.php#ini.post-max-size) (default: `8m`)

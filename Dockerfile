@@ -22,7 +22,9 @@ RUN mkdir -p ${USER_HOME} \
     && chmod -R g=u ${USER_HOME}
 # Apache - install apache and mod fcgi if php-fpm
 RUN rm -f /etc/apache2/sites-available/000-default.conf
-RUN which apache2 2>&1 > /dev/null || (apt-get install -y apache2 && a2enmod headers proxy_fcgi rewrite  && sed -i -e 's#\(listen *= *\).*$#\1/var/run/php-fpm/fpm.sock#g' /usr/local/etc/php-fpm.d/zz-docker.conf)
+RUN which apache2 2>&1 > /dev/null || (apt-get install -y apache2 && a2enmod headers proxy_fcgi rewrite \
+        && sed -i -e 's#^export \([^=]\+\)=\(.*\)$#export \1=${\1:=\2}#' /etc/apache2/envvars \
+        && sed -i -e 's#\(listen *= *\).*$#\1/var/run/php-fpm/fpm.sock#g' -e 's#^\(user *= *\).*$#\1${APACHE_RUN_USER}#g' -e 's#^\(group *= *\).*$#\1${APACHE_RUN_GROUP}#g' /usr/local/etc/php-fpm.d/*.conf)
 # Apache - configuration
 COPY apache2/conf-available/ /etc/apache2/conf-available/
 # Apache - Disable useless configuration
@@ -120,6 +122,7 @@ RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-zip.ini
 COPY php/conf.d/ /usr/local/etc/php/conf.d/
 # Php - Set default php.ini config variables (can be override at runtime)
+ENV PHP_CGI_FIX_PATHINFO 0
 ENV PHP_UPLOAD_MAX_FILESIZE 2m
 ENV PHP_POST_MAX_SIZE 8m
 ENV PHP_MAX_EXECUTION_TIME 30
