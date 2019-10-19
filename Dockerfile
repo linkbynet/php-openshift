@@ -1,5 +1,6 @@
 ARG PHP_VERSION=7.2
-FROM yiisoftware/yii2-php:${PHP_VERSION}-apache
+ARG PHP_MOD=apache
+FROM yiisoftware/yii2-php:${PHP_VERSION}-${PHP_MOD}
 ARG USER_ID=2000
 ARG APP_DIR=/app
 ARG USER_HOME=/home/user
@@ -19,6 +20,11 @@ ENV USER_HOME ${USER_HOME}
 RUN mkdir -p ${USER_HOME} \
     && chgrp -R 0 ${USER_HOME} \
     && chmod -R g=u ${USER_HOME}
+# Apache - install apache and mod fcgi if php-fpm
+RUN rm -f /etc/apache2/sites-available/000-default.conf
+RUN which apache2 2>&1 > /dev/null || (apt-get install -y apache2 && a2enmod headers proxy_fcgi rewrite \
+        && sed -i -e 's#^export \([^=]\+\)=\(.*\)$#export \1=${\1:=\2}#' /etc/apache2/envvars \
+        && sed -i -e 's#\(listen *= *\).*$#\1/var/run/php-fpm/fpm.sock#g' -e 's#^\(user *= *\).*$#\1${APACHE_RUN_USER}#g' -e 's#^\(group *= *\).*$#\1${APACHE_RUN_GROUP}#g' /usr/local/etc/php-fpm.d/*.conf)
 # Apache - configuration
 COPY apache2/conf-available/ /etc/apache2/conf-available/
 # Apache - Disable useless configuration
@@ -41,8 +47,8 @@ RUN sed -i -e 's/vhost_combined/combined/g' -e 's/other_vhosts_access/access/g' 
 ENV APACHE_SYSLOG_PORT 514
 ENV APACHE_SYSLOG_PROGNAME httpd
 # Apache- Prepare to be run as non root user
-RUN mkdir -p /var/lock/apache2 \
-    && chgrp -R 0 /run /var/lock/apache2 /var/log/apache2 /etc/service \
+RUN mkdir -p /var/lock/apache2 /var/run/php-fpm\
+    && chgrp -R 0 /run /var/lock/apache2 /var/log/apache2 /etc/service /var/run/php-fpm \
     && chmod -R g=u /etc/passwd /run /var/lock/apache2 /var/log/apache2 /etc/service
 RUN rm -f /var/log/apache2/*.log \
     && ln -s /proc/self/fd/2 /var/log/apache2/error.log \
@@ -116,6 +122,7 @@ RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-zip.ini
 COPY php/conf.d/ /usr/local/etc/php/conf.d/
 # Php - Set default php.ini config variables (can be override at runtime)
+ENV PHP_CGI_FIX_PATHINFO 0
 ENV PHP_UPLOAD_MAX_FILESIZE 2m
 ENV PHP_POST_MAX_SIZE 8m
 ENV PHP_MAX_EXECUTION_TIME 30
