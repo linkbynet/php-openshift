@@ -7,6 +7,9 @@ fi
 
 basedir=$(dirname $0)
 
+# Improve bash prompt
+export PS1="\e[0;35mphd \e[0;37m\u container \h \e[0;32m\w \e[0;0m\n$ "
+
 # Set default username if not override
 USER_NAME="${USER_NAME:-default}"
 
@@ -141,7 +144,7 @@ else
 		echo "No command line running Apache HTTPD server with php-fpm"
 		export PHP_CGI_FIX_PATHINFO=1
 		mkdir -p /etc/service/{apache,php-fpm}
-		echo -e "#!/bin/bash\nif [ \$(id -u \${APACHE_RUN_USER}) -eq 0 ]; then\n\tunset APACHE_RUN_USER\nfi\nexec apachectl -DFOREGROUND\n" > "/etc/service/apache/run"
+		echo -e "#!/bin/bash\nif [ \$(id -u \${APACHE_RUN_USER}) -eq 0 ]; then\n\tunset APACHE_RUN_USER\nfi\nif [ -f /var/run/apache2/apache2.pid ]; then\n\tkill \$(cat /var/run/apache2/apache2.pid)\n\trm -f /var/run/apache2/apache2.pid\nfi\nexec apachectl -DFOREGROUND\n" > "/etc/service/apache/run"
 		echo -e "#!/bin/bash\nexec php-fpm --nodaemonize --force-stderr --allow-to-run-as-root\n" > "/etc/service/php-fpm/run"
 		chmod +x /etc/service/*/run
 		exec runsvdir /etc/service/
