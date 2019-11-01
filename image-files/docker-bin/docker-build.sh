@@ -105,9 +105,6 @@ if [ -f "composer.json" ]; then
     if [ "${COMPOSER_DEV}" != "yes" ]; then
         args="--no-dev"
     fi
-    # composer plugin that downloads packages in parallel to speed up the installation process.
-    echo -e "\tInstalling composer plugin prestissimo (https://github.com/hirak/prestissimo)"
-    composer global require hirak/prestissimo
     echo -e "\tRunning composer ${args}"
     composer ${args} -o update
     
@@ -116,7 +113,9 @@ if [ -f "composer.json" ]; then
         echo "Create doc from ${DOC_DIR_SRC} to web/${DOC_DIR_DST}"
         ~/.composer/vendor/bin/daux generate -s ${DOC_DIR_SRC} -d web/${DOC_DIR_DST}
     fi
-    
+    # Clean composer cache
+    composer clear-cache
+
     if [ "${COMPOSER_DEV}" != "yes" ]; then
         rm -rf ${USER_HOME}/.composer
     fi
