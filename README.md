@@ -1,6 +1,8 @@
 # PHP docker image
 
-This Docker image be used for any PHP application. This inherits from the official [yii2-docker](https://github.com/yiisoft/yii2-docker) image, and is based on the PHP Apache Debian version, with changes made to the configuration to ensure compatibility with the [OpenShift security policy](https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html). 
+This Docker image be used for any PHP application. This inherits from the official [php](https://hub.docker.com/_/php) image version with some information from [yii2-docker](https://github.com/yiisoft/yii2-docker) image, and is based on the PHP Apache Debian version, with changes made to the configuration to ensure compatibility with the [OpenShift security policy](https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html). 
+
+Version 5.x is based on Debian 9 (Stretch), Version 7.x Debian 10 (Buster).
 
 If you want to make modifications to the image, your `Dockerfile` should look something like this, ensuring the PHP version is updated in the FROM image descriptor:
 

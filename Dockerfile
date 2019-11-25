@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 ARG PHP_VERSION=7.2
 ARG PHP_MOD=fpm-buster
+=======
+ARG PHP_VERSION=7.4-rc
+ARG PHP_MOD=apache-buster
+>>>>>>> master
 ARG PHP_BASE_IMAGE_VERSION
 FROM php:${PHP_VERSION}-${PHP_MOD}
 ENV DEBIAN_FRONTEND=noninteractive
@@ -101,7 +106,8 @@ ENV DOC_DIR_DST doc
 # Php - update pecl protocols
 RUN pecl channel-update pecl.php.net
 # Php - Install extensions required for Yii 2.0 Framework
-RUN docker-php-ext-configure gd \
+RUN apt-get install -y --no-install-recommends libonig$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 ] && echo "5" || echo "4") libonig-dev &&\
+    docker-php-ext-configure gd \
         --with-freetype-dir=/usr/include/ \
         --with-png-dir=/usr/include/ \
         --with-jpeg-dir=/usr/include/ && \
@@ -118,7 +124,8 @@ RUN docker-php-ext-configure gd \
         mbstring \
         opcache \
         pdo_mysql \
-        pdo_pgsql
+        pdo_pgsql && \
+    apt-get remove -y libonig-dev
 # Php - Install image magick (see http://stackoverflow.com/a/8154466/291573 for usage of `printf`)
 RUN printf "\n" | pecl install imagick && \
     docker-php-ext-enable imagick
