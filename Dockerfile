@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 ARG PHP_VERSION=7.2
 ARG PHP_MOD=fpm-buster
-=======
-ARG PHP_VERSION=7.4-rc
-ARG PHP_MOD=apache-buster
->>>>>>> master
 ARG PHP_BASE_IMAGE_VERSION
 FROM php:${PHP_VERSION}-${PHP_MOD}
 ENV DEBIAN_FRONTEND=noninteractive
