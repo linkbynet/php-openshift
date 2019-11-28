@@ -177,7 +177,8 @@ RUN pecl install apcu$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -lt 6 ] && echo 
     echo "apc.serializer=igbinary" >> /usr/local/etc/php/conf.d/docker-php-ext-igbinary.ini && \
     echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 # Php - Disable extension should be enable by user if needed
-RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
+RUN chmod g=u /usr/local/etc/php/conf.d/ && \
+    rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-gd.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-gearman.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-imagick.ini \
