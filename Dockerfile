@@ -101,7 +101,8 @@ ENV DOC_DIR_DST doc
 # Php - update pecl protocols
 RUN pecl channel-update pecl.php.net
 # Php - Install extensions required for Yii 2.0 Framework
-RUN docker-php-ext-configure gd \
+RUN apt-get install -y --no-install-recommends libonig$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 ] && echo "5" || echo "4") libonig-dev &&\
+    docker-php-ext-configure gd \
         --with-freetype-dir=/usr/include/ \
         --with-png-dir=/usr/include/ \
         --with-jpeg-dir=/usr/include/ && \
@@ -118,7 +119,8 @@ RUN docker-php-ext-configure gd \
         mbstring \
         opcache \
         pdo_mysql \
-        pdo_pgsql
+        pdo_pgsql && \
+    apt-get remove -y libonig-dev
 # Php - Install image magick (see http://stackoverflow.com/a/8154466/291573 for usage of `printf`)
 RUN printf "\n" | pecl install imagick && \
     docker-php-ext-enable imagick
@@ -175,7 +177,8 @@ RUN pecl install apcu$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -lt 6 ] && echo 
     echo "apc.serializer=igbinary" >> /usr/local/etc/php/conf.d/docker-php-ext-igbinary.ini && \
     echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 # Php - Disable extension should be enable by user if needed
-RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
+RUN chmod g=u /usr/local/etc/php/conf.d/ && \
+    rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-gd.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-gearman.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-imagick.ini \
