@@ -109,6 +109,21 @@ RUN curl -sSL "https://github.com/aptible/supercronic/releases/download/v${SUPER
 ENV DOC_GENERATE yes
 ENV DOC_DIR_SRC docs
 ENV DOC_DIR_DST doc
+# Php - Set default php.ini config variables (can be override at runtime)
+ENV PHP_CGI_FIX_PATHINFO 0
+ENV PHP_UPLOAD_MAX_FILESIZE 2m
+ENV PHP_POST_MAX_SIZE 8m
+ENV PHP_MAX_EXECUTION_TIME 30
+ENV PHP_MEMORY_LIMIT 64m
+ENV PHP_REALPATH_CACHE_SIZE 256k
+ENV PHP_REALPATH_CACHE_TTL 3600
+ENV PHP_DEFAULT_SOCKET_TIMEOUT 60
+# Php - Opcache extension configuration
+ENV PHP_OPCACHE_ENABLE 1
+ENV PHP_OPCACHE_ENABLE_CLI 1
+ENV PHP_OPCACHE_MEMORY 64m
+ENV PHP_OPCACHE_VALIDATE_TIMESTAMP 0
+ENV PHP_OPCACHE_REVALIDATE_FREQ 600
 # Php - update pecl protocols
 RUN pecl channel-update pecl.php.net
 # Php - Install extensions required for Yii 2.0 Framework
@@ -186,6 +201,7 @@ RUN pecl install apcu$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -lt 6 ] && echo 
     echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 # Php - Disable extension should be enable by user if needed
 RUN chmod g=u /usr/local/etc/php/conf.d/ && \
+    chown root:root -R /usr/local/etc/php/conf.d && \
     rm -f /usr/local/etc/php/conf.d/docker-php-ext-exif.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-gd.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-gearman.ini \
@@ -198,21 +214,6 @@ RUN chmod g=u /usr/local/etc/php/conf.d/ && \
     /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     /usr/local/etc/php/conf.d/docker-php-ext-zip.ini
-# Php - Set default php.ini config variables (can be override at runtime)
-ENV PHP_CGI_FIX_PATHINFO 0
-ENV PHP_UPLOAD_MAX_FILESIZE 2m
-ENV PHP_POST_MAX_SIZE 8m
-ENV PHP_MAX_EXECUTION_TIME 30
-ENV PHP_MEMORY_LIMIT 64m
-ENV PHP_REALPATH_CACHE_SIZE 256k
-ENV PHP_REALPATH_CACHE_TTL 3600
-ENV PHP_DEFAULT_SOCKET_TIMEOUT 60
-# Php - Opcache extension configuration
-ENV PHP_OPCACHE_ENABLE 1
-ENV PHP_OPCACHE_ENABLE_CLI 1
-ENV PHP_OPCACHE_MEMORY 64
-ENV PHP_OPCACHE_VALIDATE_TIMESTAMP 0
-ENV PHP_OPCACHE_REVALIDATE_FREQ 600
 # System - Clean apt
 RUN apt-get autoremove -y && \
     apt-get clean && \
