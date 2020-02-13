@@ -25,7 +25,7 @@ fi
 echo "USER_NAME: $(id)"
 
 # Php - Define timezone
-if [ -n "${PHP_TIMEZONE}"]; then
+if [ -n "${PHP_TIMEZONE}" ]; then
 	export PHP_TIMEZONE="${TZ}"
 fi
 
