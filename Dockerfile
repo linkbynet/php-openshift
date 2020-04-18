@@ -1,7 +1,7 @@
 ARG PHP_VERSION=7.2
 ARG PHP_MOD=fpm-buster
 ARG PHP_BASE_IMAGE_VERSION
-FROM php:7.2-fpm-buster@sha256:5be7eece3e5d9b8a0edfd7df3cf8ef78557498ac7c75d92fa0ab6f12786e3e7d
+FROM php:7.2-fpm-buster@sha256:e746a3712a1f06d6b3cdbdff6ae61f033dc2edde767a59b6d216e5b622d4519d
 ENV DEBIAN_FRONTEND=noninteractive
 ARG USER_ID=2000
 ARG APP_DIR=/app
