@@ -3,7 +3,7 @@ ARG PHP_MOD=apache-buster
 ARG PHP_BASE_IMAGE_VERSION
 
 # Need to hard code the version until this is resolved https://github.com/renovatebot/renovate/issues/5626
-FROM php:7.3-apache-buster@sha256:acb7208504c075e77859e9ad00dc3d535230c017dc4e45f72adb4a0355fafc49
+FROM php:7.3-apache-buster@sha256:8459f1b30a8c6ba511a621938eff05af0d50a591edb970c7051435dcc14223ac
 ENV DEBIAN_FRONTEND=noninteractive
 ARG USER_ID=2000
 ARG APP_DIR=/app
