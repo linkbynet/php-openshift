@@ -92,17 +92,17 @@ RUN sed -i -e 's/vhost_combined/combined/g' -e 's/other_vhosts_access/access/g' 
 ENV APACHE_SYSLOG_PORT 514
 ENV APACHE_SYSLOG_PROGNAME httpd
 # Apache- Prepare to be run as non root user
-RUN mkdir -p /var/lock/apache2 /var/run/php-fpm && \
-    chgrp -R 0 /run /var/lock/apache2 /var/log/apache2 /etc/service /var/run/php-fpm && \
-    chmod -R g=u /etc/passwd /run /var/lock/apache2 /var/log/apache2 /etc/service
+RUN mkdir -p /var/lock/apache2 /var/run/apache2 /var/run/php-fpm && \
+    chgrp -R 0 /run /var/lock/apache2 /var/log/apache2 /var/run/apache2 /etc/service /var/run/php-fpm && \
+    chmod -R g=u /etc/passwd /run /var/lock/apache2 /var/log/apache2 /var/run/apache2 /etc/service
 RUN rm -f /var/log/apache2/*.log && \
     ln -s /proc/self/fd/2 /var/log/apache2/error.log && \
     ln -s /proc/self/fd/1 /var/log/apache2/access.log
 RUN sed -i -e 's/80/8080/g' -e 's/443/8443/g' /etc/apache2/ports.conf
 EXPOSE 8080 8443
 # Cron - use supercronic (https://github.com/aptible/supercronic)
-ENV SUPERCRONIC_VERSION=0.1.9
-ENV SUPERCRONIC_SHA1SUM=5ddf8ea26b56d4a7ff6faecdd8966610d5cb9d85
+ENV SUPERCRONIC_VERSION=0.1.11
+ENV SUPERCRONIC_SHA1SUM=a2e2d47078a8dafc5949491e5ea7267cc721d67c
 RUN curl -sSL "https://github.com/aptible/supercronic/releases/download/v${SUPERCRONIC_VERSION}/supercronic-linux-amd64" > "/usr/local/bin/supercronic" && \
  echo "${SUPERCRONIC_SHA1SUM}" "/usr/local/bin/supercronic" | sha1sum -c - && \
  chmod a+rx "/usr/local/bin/supercronic"
