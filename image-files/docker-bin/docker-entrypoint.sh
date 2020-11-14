@@ -79,6 +79,17 @@ if [ -n "${YII_RBAC_MIGRATE}" -a "${YII_RBAC_MIGRATE}" = "true" ]; then
     php yii rbac/load rbac.yml
 fi
 
+# Enable pinpoint by ENV variable
+if [ 0 -ne "${PHP_ENABLE_PINPOINT:-0}" ] ; then
+    if docker-php-ext-enable pinpoint_php; then
+		echo "Enabled ${extension}"
+	else
+	    echo "Failed to enable ${extension}"
+	fi
+else
+	rm -rf /etc/service.tpl/pinpoint-collector-agent
+fi
+
 if [ -n "${1}" ]; then
 	echo "Command line: ${@}"
 fi
@@ -143,13 +154,10 @@ else
 	if which php-fpm 2>&1 > /dev/null; then
 		echo "No command line running Apache HTTPD server with php-fpm"
 		export PHP_CGI_FIX_PATHINFO=1
-		mkdir -p /etc/service/{apache,php-fpm}
-		echo -e "#!/bin/bash\nif [ \$(id -u \${APACHE_RUN_USER}) -eq 0 ]; then\n\tunset APACHE_RUN_USER\nfi\nif [ -f /var/run/apache2/apache2.pid ]; then\n\tkill \$(cat /var/run/apache2/apache2.pid)\n\trm -f /var/run/apache2/apache2.pid\nfi\nipcrm -a\nexec apachectl -DFOREGROUND\n" > "/etc/service/apache/run"
-		echo -e "#!/bin/bash\nexec php-fpm --nodaemonize --force-stderr --allow-to-run-as-root\n" > "/etc/service/php-fpm/run"
-		chmod +x /etc/service/*/run
-		exec runsvdir /etc/service/
 	else
 		echo "No command line running Apache HTTPD server with mod_php"
-		exec "apache2-foreground"
+		rm -rf /etc/service.tpl/php-fpm
 	fi
+	mv /etc/service.tpl/* /etc/service/
+	exec runsvdir /etc/service/
 fi

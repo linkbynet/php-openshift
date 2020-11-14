@@ -50,7 +50,7 @@ ENV PATH=/app:/app/vendor/bin:/root/.composer/vendor/bin:$PATH
 # System - Set terminal type
 ENV TERM=linux
 # System - Install Yii framework bash autocompletion
-RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
+RUN curl -sSL https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
         -o /etc/bash_completion.d/yii
 # Apache - install apache and mod fcgi if php-fpm
 ENV PHPFPM_PM_MAX_CHILDREN 10
@@ -70,6 +70,8 @@ RUN which apache2 2>&1 > /dev/null || (apt-get install --no-install-recommends -
         /usr/local/etc/php-fpm.d/*.conf)
 # All - Add configuration files
 COPY image-files/ /
+RUN chgrp -R 0 /etc/service.tpl && \
+    chmod -R g=u /etc/service.tpl
 # Apache - Enable mod rewrite and headers
 RUN a2enmod headers rewrite
 # Apache - Disable useless configuration
@@ -162,10 +164,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
         --filename=composer.phar \
         --install-dir=/usr/local/bin && \
     chmod a+rx "/usr/local/bin/composer"
-# Composer - Install composer plugin prestissimo (https://github.com/hirak/prestissimo)
-RUN composer global require --optimize-autoloader "hirak/prestissimo" && \
-    composer global dumpautoload --optimize && \
-    composer clear-cache
 # Php - Cache & Session support
 # Php - Redis (for php 5.X use 4.3.0 last compatible version)
 RUN pecl install redis$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -lt 6 ] && echo "-4.3.0") && \
@@ -199,6 +197,47 @@ RUN pecl install apcu$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -lt 6 ] && echo 
     docker-php-ext-enable apcu && \
     echo "apc.serializer=igbinary" >> /usr/local/etc/php/conf.d/docker-php-ext-igbinary.ini && \
     echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
+# Pinpoint - Collector agent
+ENV PINPOINT_COLLECTOR_AGENT_VERSION 0.3.2
+ARG PINPOINT_COLLECTOR_AGENT_DIR=/opt/pinpoint-collector-agent
+ENV PINPOINT_COLLECTOR_AGENT_DIR ${PINPOINT_COLLECTOR_AGENT_DIR}
+ENV PINPOINT_COLLECTOR_AGENT_TYPE 1500
+ENV PINPOINT_COLLECTOR_AGENT_LOGLEVEL ERROR
+ENV PINPOINT_COLLETOR_AGENT_ADDRESS unix:/var/run/pinpoint-collector-agent/collector-agent.sock
+
+ENV PINPOINT_COLLECTOR_GRPC_AGENT_PORT 9991
+ENV PINPOINT_COLLECTOR_GRPC_STAT_PORT 9992
+ENV PINPOINT_COLLECTOR_GRPC_SPAN_PORT 9993
+# Pinpoint - Fetch source
+RUN git clone https://github.com/naver/pinpoint-c-agent.git /opt/pinpoint-c-agent/ && \
+    cd /opt/pinpoint-c-agent && \
+    git checkout v${PINPOINT_COLLECTOR_AGENT_VERSION} && \
+    mv collector-agent ${PINPOINT_COLLECTOR_AGENT_DIR}
+# Pinpoint - Install pinpoint collector agent
+RUN apt-get update && \
+    apt-get install -y python3-pip && \
+    cd /opt/pinpoint-collector-agent && \
+    pip3 install -r requirements.txt && \
+    pip3 install grpcio-tools && \
+    python3 -m grpc_tools.protoc -I./Proto/grpc --python_out=./Proto/grpc --grpc_python_out=./Proto/grpc ./Proto/grpc/*.proto && \
+    mkdir -p /var/log/pinpoint-collector-agent /var/run/pinpoint-collector-agent && \
+    chgrp -R 0 ${PINPOINT_COLLECTOR_AGENT_DIR} /var/log/pinpoint-collector-agent /var/run/pinpoint-collector-agent && \
+    chmod -R g=u ${PINPOINT_COLLECTOR_AGENT_DIR} /var/log/pinpoint-collector-agent /var/run/pinpoint-collector-agent
+# Pinpoint - Php module configuration
+ENV PINPOINT_PHP_COLLETOR_AGENT_HOST ${PINPOINT_COLLETOR_AGENT_ADDRESS}
+ENV PINPOINT_PHP_SEND_SPAN_TIMEOUT_MS 0
+ENV PINPOINT_PHP_TRACE_LIMIT -1
+# Pinpoint - Install pinpoint php module
+RUN apt-get update && \
+    apt-get install -y cmake && \
+    cd /opt/pinpoint-c-agent/ && \
+    phpize && \
+    ./configure && \
+    make && \
+    make test TESTS=src/PHP/tests/ && \
+    make install && \
+    make clean && \
+    rm -rf /opt/pinpoint-c-agent
 # Php - Disable extension should be enable by user if needed
 RUN chmod g=u /usr/local/etc/php/conf.d/ && \
     chown root:root -R /usr/local/etc/php/conf.d && \
