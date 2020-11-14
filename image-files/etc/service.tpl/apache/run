@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ $(id -u ${APACHE_RUN_USER}) -eq 0 ]; then
+    unset APACHE_RUN_USER
+fi
+
+if [ -f /var/run/apache2/apache2.pid ]; then
+    kill $(cat /var/run/apache2/apache2.pid)
+    rm -f /var/run/apache2/apache2.pid
+fi
+
+ipcrm -a
+exec apachectl -DFOREGROUND

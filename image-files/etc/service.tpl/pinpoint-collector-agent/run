@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+cd ${PINPOINT_COLLECTOR_AGENT_DIR}
+
+export COLLECTOR_CONFIG="${PINPOINT_COLLECTOR_AGENT_DIR}/conf/collector.conf"
+
+# Create collector agent configuration file
+cat << _EOF > ${COLLECTOR_CONFIG}
+[Collector]
+ServerType=${PINPOINT_COLLECTOR_AGENT_TYPE}
+collector.grpc.agent.ip=${PINPOINT_COLLECTOR_GRPC_AGENT_HOST}
+collector.grpc.agent.port=${PINPOINT_COLLECTOR_GRPC_AGENT_PORT:-9991}
+collector.grpc.stat.ip=${PINPOINT_COLLECTOR_GRPC_STAT_HOST}
+collector.grpc.stat.port=${PINPOINT_COLLECTOR_GRPC_STAT_PORT:-9992}
+collector.grpc.span.ip=${PINPOINT_COLLECTOR_GRPC_SPAN_HOST}
+collector.grpc.span.port=${PINPOINT_COLLECTOR_GRPC_SPAN_PORT:-9993}
+collector.grpc.discardpolicy.maxpendingthreshold=10000
+
+[Common]
+# Apache webserver port
+Web_Port=8080
+Log_Level=${PINPOINT_COLLECTOR_AGENT_LOGLEVEL:-ERROR}
+LOG_DIR=/var/log/pinpoint-collector-agent
+
+[Agent]
+Address=${PINPOINT_COLLETOR_AGENT_ADDRESS#*:}
+_EOF
+
+exec /usr/bin/python3 /opt/pinpoint-collector-agent/run.py
