@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Check log and search for error pattern
+if tail -F ${PINPOINT_COLLECTOR_AGENT_LOGDIR}/collector.agent.log | grep -m 1 'StatusCode.UNAVAILABLE'; then
+    # Stop agent
+    pkill -f ${PINPOINT_COLLECTOR_AGENT_DIR}/run.py
+    # Wait a little to avoid loop restart
+    sleep 10
+fi

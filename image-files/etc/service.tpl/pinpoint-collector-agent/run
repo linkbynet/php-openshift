@@ -22,10 +22,13 @@ collector.grpc.discardpolicy.maxpendingthreshold=10000
 # Apache webserver port
 Web_Port=8080
 Log_Level=${PINPOINT_COLLECTOR_AGENT_LOGLEVEL:-ERROR}
-LOG_DIR=/var/log/pinpoint-collector-agent
+LOG_DIR=${PINPOINT_COLLECTOR_AGENT_LOGDIR}
 
 [Agent]
 Address=${PINPOINT_COLLETOR_AGENT_ADDRESS#*:}
 _EOF
 
-exec /usr/bin/python3 /opt/pinpoint-collector-agent/run.py
+# Remove old log
+rm -f ${PINPOINT_COLLECTOR_AGENT_LOGDIR}/*.agent.log
+
+exec /usr/bin/python3 ${PINPOINT_COLLECTOR_AGENT_DIR}/run.py
