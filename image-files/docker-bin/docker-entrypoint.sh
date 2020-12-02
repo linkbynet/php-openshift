@@ -87,7 +87,7 @@ if [ 0 -ne "${PHP_ENABLE_PINPOINT:-0}" ] ; then
 	    echo "Failed to enable ${extension}"
 	fi
 else
-	rm -rf /etc/service.tpl/pinpoint-collector-agent
+	rm -rf /etc/service.tpl/pinpoint-collector-agent*
 fi
 
 if [ -n "${1}" ]; then
@@ -104,6 +104,9 @@ elif [ "${1}" = "cron" ]; then
 	exec /usr/local/bin/supercronic ${args} /etc/crontab
 elif [ "${1}" = "bash" -o "${1}" = "php" -o "${1}" = "composer" ]; then
 	exec ${@}
+elif [ "${1}" = "pinpoint-collector-agent" ]; then
+	mv /etc/service.tpl/pinpoint-collector-agent* /etc/service/
+	exec runsvdir /etc/service/
 elif [ "${1}" = "worker" ]; then
     nb_worker=${2}
     shift 2

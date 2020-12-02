@@ -106,7 +106,7 @@ if [ -f "composer.json" ]; then
         args="--no-dev"
     fi
     echo -e "\tRunning composer ${args}"
-    composer ${args} -o update
+    composer -n ${args} -o update
     
     if [ "${DOC_GENERATE}" = "yes" -a -d "${DOC_DIR_SRC}" ]; then
         composer global require daux/daux.io
