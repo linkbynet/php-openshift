@@ -1,7 +1,6 @@
 ARG PHP_VERSION=7.2
 ARG PHP_MOD=fpm-buster
 ARG PHP_BASE_IMAGE_VERSION
-
 # Need to hard code the version until this is resolved https://github.com/renovatebot/renovate/issues/5626
 FROM php:7.2-fpm-buster@sha256:49e30de91684104eff43562134ea95cf407a5dd62417a8a2b6f8067d2df94be5
 ENV DEBIAN_FRONTEND=noninteractive
@@ -132,7 +131,7 @@ ENV PHP_OPCACHE_REVALIDATE_FREQ 600
 RUN pecl channel-update pecl.php.net
 # Php - Install extensions required for Yii 2.0 Framework
 RUN apt-get install -y --no-install-recommends libonig$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 ] && echo "5" || echo "4") libonig-dev &&\
-    docker-php-ext-configure gd $([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 -a $(echo "${PHP_VERSION}" | cut -f2 -d.) -gt 3  ] && echo "--with-freetype --with-jpeg" || echo "--with-freetype-dir=/usr/include/ --with-png-dir=/usr/include/ --with-jpeg-dir=/usr/include/")
+    docker-php-ext-configure gd $([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 -a $(echo "${PHP_VERSION}" | cut -f2 -d.) -gt 3 -o $(echo "${PHP_VERSION}" | cut -f1 -d.) -eq 8 ] && echo "--with-freetype --with-jpeg" || echo "--with-freetype-dir=/usr/include/ --with-png-dir=/usr/include/ --with-jpeg-dir=/usr/include/")
 RUN docker-php-ext-configure bcmath && \
     docker-php-ext-install \
         soap \
@@ -149,8 +148,9 @@ RUN docker-php-ext-configure bcmath && \
         pdo_pgsql && \
     apt-get remove -y libonig-dev
 # Php - Install image magick (see http://stackoverflow.com/a/8154466/291573 for usage of `printf`)
-RUN printf "\n" | pecl install imagick && \
-    docker-php-ext-enable imagick
+# need to wait for https://github.com/Imagick/imagick/issues/358
+RUN [ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 7 ] || (printf "\n" | pecl install imagick && \
+    docker-php-ext-enable imagick)
 # Php - Mongodb with SSL
 RUN apt-get install -y --no-install-recommends libssl1.1 libssl-dev &&\
     pecl uninstall mongodb && \
@@ -180,10 +180,10 @@ RUN apt-get install -y --no-install-recommends libgmp-dev libgmpxx4ldbl && \
     ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h && \
     docker-php-ext-install gmp && \
     apt-get remove -y libgmp-dev
-# Php - Gearman (for php 5.X use 1.1.X last compatible version)
-RUN apt-get install -y --no-install-recommends git unzip libgearman-dev libgearman$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 ] && echo "8" || echo "7") && \
+# Php - Gearman (for php 5.X use 1.1.X last compatible version, not supported on php 8)
+RUN [ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 7 ] || (apt-get install -y --no-install-recommends git unzip libgearman-dev libgearman$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 ] && echo "8" || echo "7") && \
     [ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 6 ] && (git clone https://github.com/wcgallego/pecl-gearman.git && cd pecl-gearman && phpize && ./configure && make && make install && cd - && rm -rf pecl-gearman) || pecl install gearman && \
-    apt-get remove -y libgearman-dev
+    apt-get remove -y libgearman-dev)
 # Php - pcntl
 RUN docker-php-ext-install pcntl
 # Php - Xdebug (for php 5.X use 2.5.5 last compatible version)
@@ -201,7 +201,7 @@ RUN pecl install apcu$([ $(echo "${PHP_VERSION}" | cut -f1 -d.) -lt 6 ] && echo 
     echo "apc.serializer=igbinary" >> /usr/local/etc/php/conf.d/docker-php-ext-igbinary.ini && \
     echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 # Pinpoint - Collector agent
-ENV PINPOINT_COLLECTOR_AGENT_VERSION 0.3.2
+ENV PINPOINT_COLLECTOR_AGENT_VERSION 0.4.0
 ARG PINPOINT_COLLECTOR_AGENT_DIR=/opt/pinpoint-collector-agent
 ENV PINPOINT_COLLECTOR_AGENT_DIR ${PINPOINT_COLLECTOR_AGENT_DIR}
 ENV PINPOINT_COLLECTOR_AGENT_TYPE 1500
@@ -231,8 +231,8 @@ RUN apt-get update && \
 ENV PINPOINT_PHP_COLLETOR_AGENT_HOST ${PINPOINT_COLLETOR_AGENT_ADDRESS}
 ENV PINPOINT_PHP_SEND_SPAN_TIMEOUT_MS 0
 ENV PINPOINT_PHP_TRACE_LIMIT -1
-# Pinpoint - Install pinpoint php module
-RUN apt-get update && \
+# Pinpoint - Install pinpoint php module (disalbe on php 8 waiting for https://github.com/pinpoint-apm/pinpoint-c-agent/issues/249)
+RUN [ $(echo "${PHP_VERSION}" | cut -f1 -d.) -gt 7 ] || (apt-get update && \
     apt-get install -y cmake && \
     cd /opt/pinpoint-c-agent/ && \
     phpize && \
@@ -241,7 +241,7 @@ RUN apt-get update && \
     make test TESTS=src/PHP/tests/ && \
     make install && \
     make clean && \
-    rm -rf /opt/pinpoint-c-agent
+    rm -rf /opt/pinpoint-c-agent)
 # Php - Disable extension should be enable by user if needed
 RUN chmod g=u /usr/local/etc/php/conf.d/ && \
     chown root:root -R /usr/local/etc/php/conf.d && \
